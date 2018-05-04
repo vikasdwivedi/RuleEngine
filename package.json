@@ -1,0 +1,33 @@
+{
+  "name": "ruleengine",
+  "version": "1.0.0",
+  "description": "A Javascript based Rule Engine",
+  "main": "test/test1.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node test/test1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vikdwi/RuleEngine.git"
+  },
+  "keywords": [
+    "ruleengine",
+    "javascript",
+    "and",
+    "or",
+    "anyof",
+    "any",
+    "allof",
+    "all",
+    "recursive"
+  ],
+  "author": "Vikas Dwivedi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vikdwi/RuleEngine/issues"
+  },
+  "homepage": "https://github.com/vikdwi/RuleEngine#readme"
+}
