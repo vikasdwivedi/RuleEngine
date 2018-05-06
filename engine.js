@@ -1,39 +1,39 @@
 var SourceObject;
 
-function sortRulesByParameter (rules, sortParameter, orderBy){        
+function sortByProp (rules, sortProp, orderBy){        
     return rules.sort(function(a, b) {
-    var x = a[sortParameter]; var y = b[sortParameter];
+    var x = a[sortProp]; var y = b[sortProp];
         if(orderBy == 'asc')
             return ((x < y) ? -1 : ((x > y) ? 1 : 0));
         return ((x > y) ? -1 : ((x < y) ? 1 : 0));
     });
 }
 
-function filterActiveRules (rule) {
+
+function isStatusActive (rule) {
     return rule.status.toLowerCase() == "active";
 }
 
 var run = function (sourceObj, customRules) {   
     SourceObject =  sourceObj;       
-    var defaultAction = customRules.defaultAction,
-    sortingParameter = 'priority',
-    activeRules = customRules.rulesList.filter(filterActiveRules);
-    const sortedRules = sortRulesByParameter(activeRules, sortingParameter);
+    var resultAction = customRules.defaultAction,
+    sortProp = 'priority',
+    activeRules = customRules.rulesList.filter(isStatusActive);
+    const sortedRules = sortByProp(activeRules, sortProp);
     
-    for(let i = 0; i < sortedRules.length; i++){
-        if(ProcessRule(sortedRules[i].conditionJson))
-        {
-            return sortedRules[i].actionJson.action;
-        }
-    }
-
-    return defaultAction; 
+    sortedRules.every((element, index) => {
+       if(ProcessRule(element.conditionJson))
+       {
+             resultAction = element.actionJson.action;
+             return false; //break every if true is found
+       }
+    })
+    return resultAction; 
 };
 
 function ProcessRule (Conditions){
-    var ruleResult;
-    var ruleConditions;
-   
+    var ruleResult, ruleConditions;
+
     if(Conditions.all)
     {
         ruleConditions = Conditions.all;
@@ -54,6 +54,7 @@ function ProcessAllCondition(Conditions) {
         
     var ruleConditions = Conditions,
     allOfResult = null;
+    
     for(var i = 0; i< ruleConditions.length; i++)
     {
         var Condition = ruleConditions[i];
@@ -86,6 +87,7 @@ function ProcessAnyCondition(Conditions){
 
     var ruleConditions = Conditions,
     anyOfResult = null;
+
     for(var i = 0; i< ruleConditions.length; i++)
     {
         var Condition = ruleConditions[i];
@@ -138,7 +140,9 @@ function ProcessCondition(condition) {
                 break;
             case 'number' :
                 result = ProcessNumberOperation(parseInt(condition.value), parseInt(factValueFromSource[i]), condition.operator)
+                break;
             default:
+                logError('Unsupported Data-Type found :' + factType.toString());
                 break;
         }
 
@@ -149,6 +153,19 @@ function ProcessCondition(condition) {
     return result;
 
 }
+
+function logError (message) {
+    console.log('\x1b[31m', message, 'Stopping the Execution of Engine');
+    throw new Crash_Engine();
+
+}
+function Crash_Engine()
+{
+     Error.apply(this, arguments);
+     this.name = "Engine_Crash"; 
+}
+
+Crash_Engine.prototype = Object.create(Error.prototype);
 
 
 function getFactValueFromSource(factName) {
@@ -182,6 +199,7 @@ function ProcessStringOperation(source, target, operationType) {
              return target.toLowerCase().indexOf(source.toLowerCase()) > -1
             break;
         default:
+             logError('Invalid Operation for Data-Type : String found. Invalid operation name :' + operationType.toString());
             return false;
             break;
     }
@@ -204,6 +222,7 @@ function ProcessNumberOperation(source, target, operationType) {
                 return target.valueOf() < source.valueOf()
             break;
             default:
+                logError('Invalid Operation for Data-Type : Number found. Invalid operation name :' + operationType.toString());
                 return false;
                 break;
         }
