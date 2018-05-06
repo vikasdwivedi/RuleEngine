@@ -21,12 +21,13 @@ var run = function (sourceObj, customRules) {
     activeRules = customRules.rulesList.filter(isStatusActive);
     const sortedRules = sortByProp(activeRules, sortProp);
     
-    sortedRules.every((element, index) => {
+    sortedRules.some((element, index) => {
        if(ProcessRule(element.conditionJson))
        {
              resultAction = element.actionJson.action;
-             return false; //break every if true is found
+             return true; //break 'some' if true is found
        }
+       return false;
     })
     return resultAction; 
 };

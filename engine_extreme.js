@@ -6,13 +6,14 @@ var run = function (sourceObj, customRules) {
     activeRules = customRules.rulesList.filter(Utils.isStatusActive),
     sortedRules = Utils.sortByProp(activeRules, sortProp);
     
-    sortedRules.every((rule, index) => {
+    sortedRules.some((rule, index) => {
        let condType = rule.conditionJson.all ? 'all' : 'any';
        if(ProcessConditions(rule.conditionJson[condType], condType))
        {
              resultAction = rule.actionJson.action;
-             return false; //to break every
+             return true; //to break some
        }
+       return false; //continue 'some' if element is not matched 
     })
     return resultAction; 
 };
@@ -20,7 +21,7 @@ var run = function (sourceObj, customRules) {
 function ProcessConditions(conditions, conditionType) {
     var ruleConditions = conditions, result = null;  
 
-    ruleConditions.every((condition) => {
+    ruleConditions.some((condition) => {
         result = condition.all ? ProcessConditions(condition.all, 'all') : //check if 'all' is encountered
                  condition.any ? ProcessConditions(condition.any, 'any') : //check if 'any' is encountered
                  result == null ? ProcessCondition(condition) : //if we come here it means we have encoutered a condition for the first time in independed logic block
@@ -28,9 +29,11 @@ function ProcessConditions(conditions, conditionType) {
                  result || ProcessCondition(condition);
 
        if(conditionType == 'all' && result === false) //AND GATE LOGIC
-            return false; //all is false no need to evaluate further 'all' conditions, so breaking every
-       if(conditionType == 'any' && result === true) //OR GATE LOGIC
-            return false; //any is true no need to evaluate further 'any' conditions, so breaking every
+            return true; //all is false no need to evaluate further 'all' conditions, so breaking some
+       else if(conditionType == 'any' && result === true) //OR GATE LOGIC
+            return true; //any is true no need to evaluate further 'any' conditions, so breaking some    
+       else
+            return false;// this is to countinue iterating the 'some'
     });
 
      return result;
@@ -44,10 +47,10 @@ function ProcessCondition(condition) {
     if(srcFactVals  ==  null)  return false; //return if no value found in source
 
     Array.isArray(srcFactVals) || (srcFactVals = [srcFactVals]); //convert src val to array if its not
-    srcFactVals.every((factVal) => {
-       result = Utils.getOperationFn(factType, condition.operator)(condition.value, factVal)
-       if(result)
-        return false; //we found the value, now get out of every fn
+    srcFactVals.some((factVal) => {
+       if(result = Utils.getOperationFn(factType, condition.operator)(condition.value, factVal))
+            return true; //we found the value, now get out of some fn
+        return false;
     });
     return result;
 }
@@ -58,10 +61,11 @@ function getFactValsFromSource(factName) {
     if(srcFactVal && factVals.length > 1)
     {
         factVals.shift();
-        factVals.every((name) => {
+        factVals.some((name) => {
              srcFactVal = srcFactVal[name];
              if(srcFactVal === undefined)
-                return false;
+                return true;//break 'some'
+             return false; //continue
         })
     }
     return srcFactVal || null;       
