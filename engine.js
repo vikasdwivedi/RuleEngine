@@ -1,233 +1,82 @@
-var SourceObject;
-
-function sortByProp (rules, sortProp, orderBy){        
-    return rules.sort(function(a, b) {
-    var x = a[sortProp]; var y = b[sortProp];
-        if(orderBy == 'asc')
-            return ((x < y) ? -1 : ((x > y) ? 1 : 0));
-        return ((x > y) ? -1 : ((x < y) ? 1 : 0));
-    });
-}
-
-
-function isStatusActive (rule) {
-    return rule.status.toLowerCase() == "active";
-}
-
-var run = function (sourceObj, customRules) {   
-    SourceObject =  sourceObj;       
-    var resultAction = customRules.defaultAction,
-    sortProp = 'priority',
-    activeRules = customRules.rulesList.filter(isStatusActive);
-    const sortedRules = sortByProp(activeRules, sortProp);
-    
-    sortedRules.some((element, index) => {
-       if(ProcessRule(element.conditionJson))
-       {
-             resultAction = element.actionJson.action;
-             return true; //break 'some' if true is found
-       }
-       return false;
-    })
-    return resultAction; 
-};
-
-function ProcessRule (Conditions){
-    var ruleResult, ruleConditions;
-
-    if(Conditions.all)
-    {
-        ruleConditions = Conditions.all;
-        ruleResult = ProcessAllCondition(ruleConditions);
-    }
-    else if(Conditions.any)
-    {
-        ruleConditions = Conditions.any;
-        ruleResult = ProcessAnyCondition(ruleConditions);
-    }
-    else
-        return false;
-
-    return ruleResult;
-}
-
-function ProcessAllCondition(Conditions) {
-        
-    var ruleConditions = Conditions,
-    allOfResult = null;
-    
-    for(var i = 0; i< ruleConditions.length; i++)
-    {
-        var Condition = ruleConditions[i];
-        //if its nested 
-        if(Condition.all){
-            allOfResult = ProcessAllCondition(Condition.all);
-        }
-        else if(Condition.any){
-            allOfResult = ProcessAnyCondition(Condition.any)
-        }
-
-        else
-        {
-            if(allOfResult ==  null)  //for 1st time execution
-                allOfResult = ProcessCondition(ruleConditions[i])
+exports.RunEngine  = (function Engine() {
+    var SourceObject, EngineOps, Utils, run = function (sourceObj, customRules) {
+        SourceObject = sourceObj;
+        var resultAction = customRules.defaultAction, sortProp = 'priority', activeRules = customRules.rulesList.filter(Utils.isStatusActive), sortedRules = Utils.sortByProp(activeRules, sortProp);
+        sortedRules.some((rule, index) => {
+            let condType = rule.conditionJson.all ? 'all' : 'any';
+            if (ProcessConditions(rule.conditionJson[condType], condType)) {
+                resultAction = rule.actionJson.action;
+                return true; //to break some
+            }
+            return false; //continue 'some' if element is not matched 
+        });
+        return resultAction;
+    }, ProcessConditions = (conditions, conditionType) => {
+        var ruleConditions = conditions, result = null;
+        ruleConditions.some((condition) => {
+            result = condition.all ? ProcessConditions(condition.all, 'all') : //check if 'all' is encountered
+                condition.any ? ProcessConditions(condition.any, 'any') : //check if 'any' is encountered
+                    result == null ? ProcessCondition(condition) : //if we come here it means we have encoutered a condition for the first time in independed logic block
+                        conditionType === 'all' ? result && ProcessCondition(condition) : //if we come here it means, first evaluation is done, now apply 'and' 'or' logic with further evals  
+                            result || ProcessCondition(condition);
+            if (conditionType === 'all' && result === false) //AND GATE LOGIC
+                return true; //all is false no need to evaluate further 'all' conditions, so breaking some
+            else if (conditionType === 'any' && result === true) //OR GATE LOGIC
+                return true; //any is true no need to evaluate further 'any' conditions, so breaking some    
             else
-                allOfResult = allOfResult && ProcessCondition(ruleConditions[i])  //for 1st time execution
-          
-            if(allOfResult === false)
-            {
-                return false;
-            }
-        }
-    
-    }
-     return allOfResult;
-};
-
-function ProcessAnyCondition(Conditions){
-
-    var ruleConditions = Conditions,
-    anyOfResult = null;
-
-    for(var i = 0; i< ruleConditions.length; i++)
-    {
-        var Condition = ruleConditions[i];
-        //if its nested 
-        if(Condition.all){
-            anyOfResult = ProcessAllCondition(Condition.all);
-        }
-        else if(Condition.any){
-            anyOfResult = ProcessAnyCondition(Condition.any)
-        }
-
-        else
-        {
-            if(anyOfResult ==  null) //for 1st time execution
-                anyOfResult = ProcessCondition(ruleConditions[i])
-            else //subsequent exections
-                anyOfResult = anyOfResult || ProcessCondition(ruleConditions[i])
-
-            if(anyOfResult === true)
-            {
-                return true;
-            }
-        }
-    
-    }
-     return anyOfResult;
-
-};
-
-
-
-function ProcessCondition(condition) {
-    
-    var factName = (condition.fact ||  condition.field);
-        factType = (condition.dataType || typeof (condition.value));
-    var factValueFromSource = getFactValueFromSource(factName),
-        result;
-    
-    if(factValueFromSource  ==  null)
-        return false;
-
-    Array.isArray(factValueFromSource) || (factValueFromSource = [factValueFromSource]);
-
-    for(let i=0 ;i < factValueFromSource.length; i++)
-    {
-        
-        switch (factType.toLowerCase()) {
-            case 'string':
-                result = ProcessStringOperation(condition.value, factValueFromSource[i], condition.operator)
-                break;
-            case 'number' :
-                result = ProcessNumberOperation(parseInt(condition.value), parseInt(factValueFromSource[i]), condition.operator)
-                break;
-            default:
-                logError('Unsupported Data-Type found :' + factType.toString());
-                break;
-        }
-
-        if(result)
-            return true;
-    }
-
-    return result;
-
-}
-
-function logError (message) {
-    console.log('\x1b[31m', message, 'Stopping the Execution of Engine');
-    throw new Crash_Engine();
-
-}
-function Crash_Engine()
-{
-     Error.apply(this, arguments);
-     this.name = "Engine_Crash"; 
-}
-
-Crash_Engine.prototype = Object.create(Error.prototype);
-
-
-function getFactValueFromSource(factName) {
-    var factNameSplit = factName.split('.');    
-    var factObjFromSource = SourceObject[factNameSplit[0]];
-
-        for(var i = 1; i< factNameSplit.length; i++)
-        {
-            factObjFromSource = factObjFromSource[factNameSplit[i]];
-
-            if(factObjFromSource === undefined)
-            {
-                return null;
-            }
-        }
-
-    return factObjFromSource || null;       
-}
-
-function ProcessStringOperation(source, target, operationType) {
-
-    switch (operationType.toLowerCase()) {
-
-        case 'equal':
-                return source.toLowerCase() === target.toLowerCase();
-            break;
-        case 'notequal' :
-            return source.toLowerCase() !== target.toLowerCase();
-            break;
-        case 'contains' :
-             return target.toLowerCase().indexOf(source.toLowerCase()) > -1
-            break;
-        default:
-             logError('Invalid Operation for Data-Type : String found. Invalid operation name :' + operationType.toString());
+                return false; // this is to countinue iterating the 'some'
+        });
+        return result;
+    }, ProcessCondition = (condition) => {
+        var result, factName = (condition.fact || condition.field), factType = (condition.dataType || typeof (condition.value)), srcFactVals = getFactValsFromSource(factName);
+        if (srcFactVals == null)
+            return false; //return if no value found in source
+        Array.isArray(srcFactVals) || (srcFactVals = [srcFactVals]); //convert src val to array if its not
+        srcFactVals.some((factVal) => {
+            if (result = Utils.getOperationFn(factType, condition.operator)(condition.value, factVal))
+                return true; //we found the value, now get out of some fn
             return false;
-            break;
-    }
-    
-}
-
-function ProcessNumberOperation(source, target, operationType) {
-    
-        switch (operationType.toLowerCase()) {
-            case 'equal':
-                    return source.valueOf() === target.valueOf();
-                break;
-            case 'notequal' :
-                return source.valueOf() !== target.valueOf();
-                break;
-            case 'greaterthan' :
-                 return target.valueOf() > source.valueOf()
-                break;
-            case 'lessthan' :
-                return target.valueOf() < source.valueOf()
-            break;
-            default:
-                logError('Invalid Operation for Data-Type : Number found. Invalid operation name :' + operationType.toString());
-                return false;
-                break;
+        });
+        return result;
+    }, getFactValsFromSource = (factName) => {
+        var factVals = factName.split('.');
+        var srcFactVal = SourceObject[factVals[0]];
+        if (srcFactVal && factVals.length > 1) {
+            factVals.shift();
+            factVals.some((name) => {
+                srcFactVal = srcFactVal[name];
+                if (srcFactVal === undefined)
+                    return true; //break 'some'
+                return false; //continue
+            });
         }
-
-        
-}
-exports.RunEngine = run;
+        return srcFactVal || null;
+    };
+    (function init() {
+        EngineOps = {};
+        Utils = {};
+        EngineOps.STRING_OPS = {
+            'equal': (source, target) => source.toLowerCase() === target.toLowerCase(),
+            'notequal': (source, target) => source.toLowerCase() !== target.toLowerCase(),
+            'contains': (source, target) => target.toLowerCase().indexOf(source.toLowerCase()) > -1
+        };
+        EngineOps.NUMBER_OPS = {
+            'equal': (source, target) => source.valueOf() === target.valueOf(),
+            'notequal': (source, target) => source.valueOf() !== target.valueOf(),
+            'greaterthan': (source, target) => target.valueOf() > source.valueOf(),
+            'lessthan': (source, target) => target.valueOf() < source.valueOf()
+        };
+        Utils.sortByProp = (list, sortProp, orderBy) => {
+            return list.sort(function (a, b) {
+                var x = a[sortProp];
+                var y = b[sortProp];
+                if (orderBy === 'asc')
+                    return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+                return ((x > y) ? -1 : ((x < y) ? 1 : 0));
+            });
+        };
+        Utils.isStatusActive = (rule) => rule.status.toLowerCase() === "active";
+        Utils.getOperationFn = (dataType, operationType) => EngineOps[dataType.toUpperCase() + '_OPS'][operationType];
+    })();
+    return run;
+})();

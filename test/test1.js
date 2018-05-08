@@ -1,4 +1,4 @@
-const Engine =  require('../engine_extreme');
+const Engine =  require('../engine');
 
 console.log(Engine.RunEngine({
     "subject" : {
@@ -43,13 +43,13 @@ console.log(Engine.RunEngine({
                                                                     },
                                                                     {
                                                                         "field": "integer",
-                                                                        "value": 0,
+                                                                        "value": 13,
                                                                         "operator": "greaterthan",
                                                                         "dataType": "number"
                                                                     },
                                                                     {
                                                                         "field": "integer",
-                                                                        "value": 66,
+                                                                        "value": 1,
                                                                         "operator": "lessthan",
                                                                         "dataType": "number"
                                                                     },

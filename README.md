@@ -3,8 +3,9 @@ A Rule Engine written in Javascript.
 
 There are two rule engines in the repository :
 
-1. Slow but readable version of rule engine named, this version can be easily extended : engine.js
-2. Higly optimized version of rule engine named : engine_extreme.js
+1. Higly optimized version of rule engine named : engine.js
+2. Slow but readable version of rule engine named, this version can be easily extended : engine_read.js
+
 
 # Inputs : 
 

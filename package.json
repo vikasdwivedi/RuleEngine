@@ -29,5 +29,6 @@
   "bugs": {
     "url": "https://github.com/vikdwi/RuleEngine/issues"
   },
-  "homepage": "https://github.com/vikdwi/RuleEngine#readme"
+  "homepage": "https://github.com/vikdwi/RuleEngine#readme",
+  "dependencies": {}
 }
