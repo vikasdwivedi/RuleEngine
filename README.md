@@ -10,7 +10,7 @@ There are two rule engines in the repository :
 
 Engine has two parts :
 
-1. Grouping of conditions : This way you can club multiple conditions for logical evaluations. Engine supports two types of grouping using 'anyOf' and 'allOf' property. Eg.
+<b>1. Grouping of conditions</b> : This way you can club multiple conditions for logical evaluations. Engine supports two types of grouping using 'anyOf' and 'allOf' property. Eg.
     
         [Array]anyOf : [{Condition 1, Condition 2, Condition 3}]
         This is evaluated as true when atleast one condtion is met. 
@@ -19,29 +19,23 @@ Engine has two parts :
         This is evaluated as true only if all condtions are met successfully.
 
 
-2. Evaluation of Conditions: Engine evaluates conditions individually. Currently engine supports only string and number based operations. This can be easily extended to other datatypes as well. 
+<b>2. Evaluation of Conditions</b>: Engine evaluates conditions individually. Currently engine supports only string and number based operations. This can be easily extended to other datatypes as well. 
 
     String Operations Supported : equal, notequal, contains
 
-
     Number Operations Supported : equal, notequal, greaterthan, lessthan
-
 
 A typical condition structure looks like this : 
 
 
-        {
-
-                                                                                    "field": "Type.Skills",
-                                                                                    "value": "Distribution",
-                                                                                    "operator": "contains",
-                                                                                    "dataType": "string"
-                                                                    
+       {
+            "field": "Type.Skills",
+            "value": "Distribution",
+            "operator": "contains",                                                                                    
+            "dataType": "string"                                    
         }
 
         
-
-    
 
 # Inputs : 
 
