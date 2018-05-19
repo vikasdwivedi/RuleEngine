@@ -1,80 +1,101 @@
 const Engine =  require('../engine');
 
 console.log(Engine.RunEngine({
-    "subject" : {
-        "role" : [ 
-            "Florist",
-            "Partner"
+    "TenderDetails" : {
+        "Organizations" : [ 
+            "Simple Corp.",
+            "Radiance Companies",
+            "Orange Labs"
         ]
     },
-    "resource" : {
-        "siteIds" : [ 
-            "FTD", 
-            "PRO", 
-            "IF"
+    "Type" : {
+        "Skills" : [ 
+            "Hardware Manufacturing", 
+            "Distribution",
+            "Vendor Management"
         ]
     },
-    "integer" : 12,
-    'querys' : ['emp', 'emp2']
+    "EmployeeCount":300,
 },
 {
-    "defaultAction" : "NO_ACCESS",
+    "defaultAction" : "No Tender Given",
     rulesList: [{
                     "conditionJson": {
                                     "all": [{
-                                                    "field": "subject.role",
-                                                    "value": "Florist",
+                                                    "field": "TenderDetails.Organizations",
+                                                    "value": "Orange Labs",
                                                     "operator": "equal",
                                                     "dataType": "string"
                                     },
                                     {
                                                     "all": [{
                                                                     "any": [{
-                                                                                    "field": "resource.siteIds",
-                                                                                    "value": "PRaO",
-                                                                                    "operator": "equal",
+                                                                                    "field": "Type.Skills",
+                                                                                    "value": "Distribution",
+                                                                                    "operator": "contains",
                                                                                     "dataType": "string"
                                                                     }
                                                                     ,{
-                                                                        "field": "resource.siteIds",
-                                                                        "value": "FTDa",
+                                                                        "field": "Type.Skills",
+                                                                        "value": "Central Operation",
                                                                         "operator": "equal",
-                                                                        "dataType": "string"
-                                                                    },
-                                                                    {
-                                                                        "field": "integer",
-                                                                        "value": 13,
-                                                                        "operator": "greaterthan",
-                                                                        "dataType": "number"
-                                                                    },
-                                                                    {
-                                                                        "field": "integer",
-                                                                        "value": 1,
-                                                                        "operator": "lessthan",
-                                                                        "dataType": "number"
-                                                                    },
-                                                                    {
-                                                                        "field": "resource.siteIds",
-                                                                        "value": "FT",
-                                                                        "operator": "contains",
                                                                         "dataType": "string"
                                                                     }
                                                                 ]
                                                     },
                                                     {
-                                                        "field": "subject.role",
-                                                        "value": "Partner",
-                                                        "operator": "equal",
-                                                        "dataType": "string"
+                                                        "field": "EmployeeCount",
+                                                        "value": 150,
+                                                        "operator": "lessthan",
+                                                        "dataType": "Number"
                                                     }]
                                     }]
                     },
                     "actionJson": {
-                                    "action": 2.99
+                                    "action": "Tender Passed. Orange Labs"
                     },
-                    "priority": 90,
-                    "ruleId": 12,
+                    "priority": 2,
+                    "ruleId": 1,
                     "status" : "active"
-    }]
+    },
+    {
+        "conditionJson": {
+                        "all": [{
+                                        "field": "TenderDetails.Organizations",
+                                        "value": "Simple Corp.",
+                                        "operator": "equal",
+                                        "dataType": "string"
+                        },
+                        {
+                                        "all": [{
+                                                        "any": [{
+                                                                        "field": "Type.Skills",
+                                                                        "value": "Distribution",
+                                                                        "operator": "contains",
+                                                                        "dataType": "string"
+                                                        }
+                                                        ,{
+                                                            "field": "Type.Skills",
+                                                            "value": "Central Operation",
+                                                            "operator": "equal",
+                                                            "dataType": "string"
+                                                        }
+                                                    ]
+                                        },
+                                        {
+                                            "field": "EmployeeCount",
+                                            "value": 100,
+                                            "operator": "greaterthan",
+                                            "dataType": "Number"
+                                        }]
+                        }]
+        },
+        "actionJson": {
+                        "action": "Tender Passed. Simple Corp."
+        },
+        "priority": 1,
+        "ruleId": 2,
+        "status" : "active"
+}]
 }
 ));
